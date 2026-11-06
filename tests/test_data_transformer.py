@@ -1,6 +1,6 @@
 import unittest
-from data_transformer import transform_data
-from data_transformer import standardize_data
+from transform.data_transformer import transform_data
+from transform.data_transformer import standardize_data
 import numpy as np
 import pandas as pd
 

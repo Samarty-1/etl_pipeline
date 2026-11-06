@@ -1,14 +1,18 @@
-#Uus haru
+"""Read CSV rows for use by the transformation stage."""
+
 import csv
 
 
 def extract_data(file_name):
-    with open(file_name, 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            print(row)
+    """Return all rows, including the header, from a UTF-8 CSV file.
 
-if __name__ == "__main__":
-    extract_data('data.csv')
+    Accepts paths or path-like objects. An optional UTF-8 BOM is stripped.
+    File and decoding errors propagate to the caller.
+    """
+    with open(file_name, 'r', encoding='utf-8-sig', newline='') as file:
+        return list(csv.reader(file))
 
-    #kommentaar suvs
+
+if __name__ == '__main__':
+    for row in extract_data('data.csv'):
+        print(row)
