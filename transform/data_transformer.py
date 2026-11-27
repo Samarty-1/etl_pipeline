@@ -1,3 +1,6 @@
+from numbers import Real
+
+
 def transform_data(data):
     """
     Transforms a list of lists by converting all numerical values to floats.
@@ -32,28 +35,39 @@ if __name__ == "__main__":
 
 def standardize_data(data):
     """
-    Standardizes numerical data to have a mean of 0 and standard deviation of 1.
-    Assumes the input is a table of data, where each sub-list is a row.
+    Standardize each numeric column using its sample standard deviation.
+
+    Accepts a pandas DataFrame or a list of rows whose first row is a header.
+    Returns a copy, preserving headers and nonnumeric values. Constant columns
+    and columns with only one numeric value are centered to zero.
     """
-    # Get all numerical values
-    numerical_values = [value for row in data[1:] for value in row if isinstance(value, float)]
-    
-    # Calculate the mean and standard deviation
-    mean = sum(numerical_values) / len(numerical_values)
-    std_dev = (sum((x - mean) ** 2 for x in numerical_values) / len(numerical_values)) ** 0.5
-    
-    # Create a new table with standardized numerical values
-    standardized_data = []
-    for row in data:
-        new_row = []
-        for value in row:
-            if isinstance(value, float):
-                new_value = (value - mean) / std_dev
-                new_row.append(new_value)
-            else:
-                new_row.append(value)
-        standardized_data.append(new_row)
-    
+    if hasattr(data, 'select_dtypes'):
+        standardized_data = data.copy()
+        numeric_data = data.select_dtypes(include='number')
+        scale = numeric_data.std()
+        scale = scale.mask((scale == 0) | scale.isna(), 1.0)
+        standardized_data[numeric_data.columns] = (numeric_data - numeric_data.mean()) / scale
+        return standardized_data
+
+    standardized_data = [list(row) for row in data]
+    if not data:
+        return standardized_data
+
+    for column_index in range(len(data[0])):
+        numeric_rows = [
+            row for row in standardized_data[1:]
+            if isinstance(row[column_index], Real)
+            and not isinstance(row[column_index], bool)
+        ]
+        if not numeric_rows:
+            continue
+        values = [row[column_index] for row in numeric_rows]
+        mean = sum(values) / len(values)
+        variance = sum((value - mean) ** 2 for value in values)
+        scale = (variance / (len(values) - 1)) ** 0.5 if len(values) > 1 else 0.0
+        for row in numeric_rows:
+            row[column_index] = (row[column_index] - mean) / scale if scale else 0.0
+
     return standardized_data
 
 if __name__ == "__main__":
